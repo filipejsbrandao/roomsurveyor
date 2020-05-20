@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="OrientPoly_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>OrientPoly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="RoomSurvey1_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurvey1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="RoomSurvey2_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurvey2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="RoomSurvey_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurvey.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RoomSurvey3_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurvey3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="WnInside_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Wn_Inside.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="IsOrtho_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>IsOrtho.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+     <data name="IsConvex_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>IsConvex.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+     <data name="Angles_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>InternalAngles.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="ShiftPolySPt_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>ShiftPoly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RoomSurvey4_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurvey4.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RoomTurtle_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomTurtle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="ArePointsLeft_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>ArePointsLeft.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="CornerProperties_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>CornerProperties.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="DeOgonizer_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>DeOgonizer.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="DeOgonizer_v1_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>DeOgonizer_v1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="DeOgonizer_v2_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>DeOgonizer_v2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="DeOgonizer_v3_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>DeOgonizer_v3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="DeOgonizer_v4_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>DeOgonizer_v4.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="InternalDiagonals_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>InternalDiagonals.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="IsPointLeft_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>IsPointLeft.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="PolyDiagonals_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>PolyDiagonals.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="PolyDiagonals2_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>PolyDiagonals2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RandomConvexPoly_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RandomConvexPoly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RandomOgon_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RandomOgon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RoomSurveyOrtho_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurveyOrtho.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RoomSurveyStrict_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RoomSurveyStrict.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+    <data name="RS_OnSpeeds_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RS_OnSpeeds.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+</root>
