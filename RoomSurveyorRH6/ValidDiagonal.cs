@@ -44,7 +44,7 @@ namespace RoomSurveyorRH6
             }
 
             //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
-            curve.TryGetPlane(out Plane uPlane);
+            curve.TryGetPlane(out Plane curvePlane);
 
             if (curve.TryGetPolyline(out poly)) { }
             else
@@ -65,10 +65,10 @@ namespace RoomSurveyorRH6
                 return;
             }
 
-            Transform transform = Transform.PlaneToPlane(uPlane, Plane.WorldXY);
+            Transform transform = Transform.PlaneToPlane(curvePlane, Plane.WorldXY);
             poly.Transform(transform);
 
-            transform = Transform.PlaneToPlane(Plane.WorldXY, uPlane);
+            transform = Transform.PlaneToPlane(Plane.WorldXY, curvePlane);
             double[,] diagMatrix = RoomSurvey4.UpperMatrix(poly);
             DataTree<Line> diagonals = DiagonalTree(diagMatrix, poly);
             DataTree<int> indices = IndexTree(diagMatrix);

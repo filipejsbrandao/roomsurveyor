@@ -166,7 +166,7 @@ namespace RoomSurveyorRH6
                             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
                         }
 
-                        if (RoomSurvey4.IsValidDiagonal(new Line(poly[from], poly[to]), poly))
+                        if (RoomSurvey4.IsInternalDiagonal(new Line(poly[from], poly[to]), poly))
                         {
                             diagonals.Add(poly[from].DistanceTo(poly[to]));
                         }

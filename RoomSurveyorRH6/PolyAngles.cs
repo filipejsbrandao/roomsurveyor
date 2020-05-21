@@ -11,7 +11,7 @@ namespace RoomSurveyorRH6
     {
 
         public PolyAngles()
-          : base("Polyon Angles", "PA",
+          : base("Polygon Angles", "PA",
             "Returns the internal and reflex angles of a polygon at each corner. If the polygon is Counter Clockwise oriented the angles are returned in the CCCW order, else the angles are returned in clockwise order",
             "RoomSurveyor", "Utils")
         {
@@ -50,7 +50,7 @@ namespace RoomSurveyorRH6
             }
 
             //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
-            curve.TryGetPlane(out Plane uPlane);
+            curve.TryGetPlane(out Plane curvePlane);
 
             if (curve.TryGetPolyline(out poly))
             { }
@@ -72,7 +72,10 @@ namespace RoomSurveyorRH6
             }
 
             startPt = poly[0];
-            isCCW = IsCCW(poly);
+            Transform transform = Transform.PlaneToPlane(curvePlane, Plane.WorldXY);
+            isCCW = IsCCW(poly, curvePlane);
+            poly.Transform(transform);
+            //isCCW = IsCCW(poly, curvePlane);
 
             for (int i = 0; i < poly.Count - 1; i++)
             {
@@ -106,12 +109,11 @@ namespace RoomSurveyorRH6
         /// </summary>
         /// <returns><c>true</c>, if the polygon is Counter Clockwise oriented, <c>false</c> otherwise.</returns>
         /// <param name="poly">A closed polyline that represents the polygon.</param>
-        public static bool IsCCW(Polyline poly)
+        public static bool IsCCW(Polyline poly, Plane plane)
         {
             bool isCCW = false;
-            Vector3d unitZ = new Vector3d(0, 0, 1);
             Curve a = poly.ToNurbsCurve();
-            if (a.ClosedCurveOrientation(unitZ) == CurveOrientation.CounterClockwise)
+            if (a.ClosedCurveOrientation(plane) == CurveOrientation.CounterClockwise)
                 isCCW = true;
 
             return isCCW;

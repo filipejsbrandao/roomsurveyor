@@ -9,39 +9,35 @@ namespace RoomSurveyorRH6
 {
     public class IsInside_Wn : GH_Component
     {
-        /// <summary>
-        /// Each implementation of GH_Component must provide a public 
-        /// constructor without any arguments.
-        /// Category represents the Tab in which the component will appear, 
-        /// Subcategory the panel. If you use non-existing tab or panel names, 
-        /// new tabs/panels will automatically be created.
-        /// </summary>
         public IsInside_Wn()
           : base("Is Inside (Wn)", "IsIn",
-            "Checks if a point is inside a polygon using the winding number counter algorithm. If the polygon is oriented in the Counter Clockwise direction the algorithm returns positive numbers, otherwise it returns negative numbers for inclusion. 0 = outside, 1 = the polygonal chain wraps around the point once, n = the polygon wraps n times around the point",
+            "Checks if some points are inside a polygon using the winding number counter algorithm. 0 = outside, 1 = the polygonal chain wraps around the point once, n = the polygon wraps n times around the point",
             "RoomSurveyor", "Ises")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Point", "Pt", "A point to test inclusion", GH_ParamAccess.item);
+            pManager.AddPointParameter("Points", "Pts", "A point to test inclusion", GH_ParamAccess.list);
             pManager.AddCurveParameter("Polygon", "P", "The Polygon to test the inclusion", GH_ParamAccess.item);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddIntegerParameter("Winding Number", "WN", "The number of times the polygon wraps around the point", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Winding Number", "Wn", "The number of times the polygon wraps around the point", GH_ParamAccess.list);
+            pManager.AddPointParameter("Points Inside", "Pts'", "Points that are inside the curve projected onto the curve plane", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Curve Plane", "Pl", "Plane the curve is on", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Polyline poly = new Polyline();
             Curve curve = poly.ToNurbsCurve();
-            Point3d pt = new Point3d();
-            double wnPoly; // the number of times a polygon wraps arround a point
+            List<Point3d> pts = new List<Point3d>();
+            List<double> wnPoly = new List<double>(); // the number of times a polygon wraps arround a point
+            List<Point3d> ptsInside = new List<Point3d>();
 
-            if (!DA.GetData(0, ref pt)) return;
+            if (!DA.GetDataList(0, pts)) return;
             if (!DA.GetData(1, ref curve)) return;
 
             if (!curve.IsPlanar())
@@ -49,6 +45,9 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The polygon must be a planar polyline");
                 return;
             }
+
+            //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
+            curve.TryGetPlane(out Plane uPlane);
 
             if (curve.TryGetPolyline(out poly))
             { }
@@ -68,18 +67,33 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A closed polyline must be supplied");
                 return;
             }
-            else if (!pt.IsValid)
+            foreach(Point3d pt in pts)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A valid point must be supplied");
-                return;
+                if (!pt.IsValid)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A valid point must be supplied");
+                    return;
+                }
             }
 
+            Transform transform = Transform.PlaneToPlane(uPlane, Plane.WorldXY);
+            poly.Transform(transform);
             int edges = poly.SegmentCount;
             Point3d[] pointArray = poly.ToArray();
 
-            wnPoly = PnPoly(pt, pointArray, edges);
+            foreach(Point3d pt in pts)
+            {
+                Point3d tempPt = uPlane.ClosestPoint(pt);
+                Point3d tempPt2 = new Point3d(tempPt);
+                tempPt.Transform(transform);
+                int wn = PnPoly(tempPt, pointArray, edges);
+                wnPoly.Add(wn);
+                if (wn != 0) ptsInside.Add(tempPt2);
+            }
 
-            DA.SetData(0, wnPoly);
+            DA.SetDataList(0, wnPoly);
+            DA.SetDataList(1, ptsInside);
+            DA.SetData(2, uPlane);
 
         }
         /// <summary>

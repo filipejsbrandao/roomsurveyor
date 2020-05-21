@@ -11,7 +11,7 @@ namespace RoomSurveyorRH6
     {
         public OgonCornerProperties()
           : base("Ogon Corner Properties", "OCP",
-            "The ",
+            "Some morphological properties of the polygon that may be used for comparisons between polygons",
             "RoomSurveyor", "Utils")
         {
         }
@@ -32,8 +32,6 @@ namespace RoomSurveyorRH6
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            //This component will provide a string with the polygon type, a list of numbers with the turns at each corner and a string with L and R
-
             Polyline poly = new Polyline();
             Curve curve = poly.ToNurbsCurve();
             Plane userPlane = Plane.WorldXY;
@@ -51,6 +49,9 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon must be a planar polyline");
                 return;
             }
+
+            //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
+            curve.TryGetPlane(out Plane curvePlane);
 
             if (curve.TryGetPolyline(out poly))
             { }
@@ -71,16 +72,17 @@ namespace RoomSurveyorRH6
                 return;
             }
 
-            if (!curve.IsInPlane(userPlane, double.Epsilon))
+            if (curvePlane.Normal.IsParallelTo(userPlane.Normal, 0.002) == 0)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon is not on the provided plane");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon is not parallel within tolerance to the provided plane");
                 return;
             }
 
             //Now we must orient the polygon to the user desired orientation.
             poly = OrientPolygon.OrientPoly(poly, userPlane, orientation);
 
-
+            Transform transform = Transform.PlaneToPlane(userPlane, Plane.WorldXY);
+            poly.Transform(transform);
             relation = PolyCornerRelation(poly);// add a new return type of list of integers with 0s
             
             type = PolyType(relation);
@@ -185,23 +187,34 @@ namespace RoomSurveyorRH6
                 }
                 if (i == relation.Count - 1 && relation[next] == relation[i])
                 {
-                    int j = 0;
-                    int length = typeList[0].Length - 1;
-                    try
+                    if(typeList.Count == 0)//Its convex
                     {
-                        j = Int32.Parse(typeList[0].Substring(0, length));
+                        int count = (L != 0) ? L : R;
+                        cornerCount.Add(count);
+                        string s = (L != 0) ? L.ToString() + "L" : R.ToString() + "R";
+                        typeList.Add(s);
                     }
-                    catch (FormatException e)
+                    else
                     {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
-                    }
-                    string s = (L != 0) ? (L + j).ToString() + "L" : (R + j).ToString() + "R";
-                    int count = (L != 0) ? L + j : R + j;
+                        int j = 0;
+                        int length = typeList[0].Length - 1;
+                        try
+                        {
+                            j = Int32.Parse(typeList[0].Substring(0, length));
+                        }
+                        catch (FormatException e)
+                        {
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                        }
+                        string s = (L != 0) ? (L + j).ToString() + "L" : (R + j).ToString() + "R";
+                        int count = (L != 0) ? L + j : R + j;
 
-                    typeList.Insert(0, s);
-                    typeList.RemoveAt(1);
-                    cornerCount.Insert(0, count);
-                    cornerCount.RemoveAt(1);
+                        typeList.Insert(0, s);
+                        typeList.RemoveAt(1);
+                        cornerCount.Insert(0, count);
+                        cornerCount.RemoveAt(1);
+                    }
+                    
                 }
             }
 

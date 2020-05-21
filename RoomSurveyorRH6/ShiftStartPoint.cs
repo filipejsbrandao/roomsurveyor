@@ -40,6 +40,14 @@ namespace RoomSurveyorRH6
             if (!DA.GetData(0, ref curve)) return;
             if (!DA.GetData(1, ref shift)) return;
 
+            if (!curve.IsPlanar())
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon must be a planar polyline");
+                return;
+            }
+
+            curve.TryGetPlane(out Plane curvePlane);
+
             if (curve.TryGetPolyline(out poly))
             { }
             else
@@ -58,7 +66,7 @@ namespace RoomSurveyorRH6
                 return;
             }
 
-            isCCW = PolyAngles.IsCCW(poly);
+            isCCW = PolyAngles.IsCCW(poly, curvePlane);
             direction = (shift > 0) ? true : false;
             if (!isCCW) direction = !direction;
 

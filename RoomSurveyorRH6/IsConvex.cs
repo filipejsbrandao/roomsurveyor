@@ -35,6 +35,15 @@ namespace RoomSurveyorRH6
 
             if (!DA.GetData(0, ref curve)) return;
 
+            if (!curve.IsPlanar())
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon must be a planar polyline");
+                return;
+            }
+
+            //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
+            curve.TryGetPlane(out Plane uPlane);
+
             if (curve.TryGetPolyline(out poly)) { }
             else
             {
@@ -53,6 +62,9 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A closed polyline must be supplied");
                 return;
             }
+
+            Transform transform = Transform.PlaneToPlane(uPlane, Plane.WorldXY);
+            poly.Transform(transform);
 
             convex = IsPolyConvex(poly);
 
