@@ -65,6 +65,14 @@ namespace RoomSurveyorRH6
                     return;
                 }
 
+                var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(ogons[i], 0.001);
+                
+                if (events.Count != 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided ogon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
+                    return;
+                }
+
                 if (ogons[i].TryGetPolyline(out Polyline ogon))
                 { }
                 else
@@ -88,6 +96,14 @@ namespace RoomSurveyorRH6
                 if (!polies[i].IsPlanar())
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The poly " + i + " must be a planar polyline");
+                    return;
+                }
+
+                events = Rhino.Geometry.Intersect.Intersection.CurveSelf(polies[i], 0.001);
+
+                if (events.Count != 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided polygon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
                     return;
                 }
 

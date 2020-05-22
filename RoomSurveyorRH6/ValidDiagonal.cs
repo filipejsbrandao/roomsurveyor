@@ -43,6 +43,13 @@ namespace RoomSurveyorRH6
                 return;
             }
 
+            var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(curve, 0.001);
+            if (events.Count != 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided polygon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
+                return;
+            }
+
             //To ensure this always works we must move the polygon to the plane XY and then return it to it original position
             curve.TryGetPlane(out Plane curvePlane);
 
