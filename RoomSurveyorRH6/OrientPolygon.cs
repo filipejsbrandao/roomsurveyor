@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class OrientPolygon : GH_Component
     {
@@ -71,13 +71,14 @@ namespace RoomSurveyorRH6
                 return;
             }
 
-            if (!userPlane) {
-                
-                    if (curvePlane.Normal.IsParallelTo(inPlane.Normal, 0.002) == 0)
-                    {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The curve is not parallel to the XY plane within tolerance. Consider providing the plane on which the curve lies or rotate it.");
-                        return;
-                    }
+            if (!userPlane)
+            {
+
+                if (curvePlane.Normal.IsParallelTo(inPlane.Normal, 0.002) == 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The curve is not parallel to the XY plane within tolerance. Consider providing the plane on which the curve lies or rotate it.");
+                    return;
+                }
             }
             else
             {
@@ -137,9 +138,10 @@ namespace RoomSurveyorRH6
         public static Polyline OrientPoly(Polyline poly, Plane plane, bool orientation)
         {
             Curve a = poly.ToNurbsCurve();
-            if (orientation) {
-                if(a.ClosedCurveOrientation(plane) == CurveOrientation.Clockwise)
-                poly.Reverse();
+            if (orientation)
+            {
+                if (a.ClosedCurveOrientation(plane) == CurveOrientation.Clockwise)
+                    poly.Reverse();
             }
             else
             {

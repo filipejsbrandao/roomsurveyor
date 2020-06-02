@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class OgonCornerProperties : GH_Component
     {
@@ -84,7 +84,7 @@ namespace RoomSurveyorRH6
             Transform transform = Transform.PlaneToPlane(userPlane, Plane.WorldXY);
             poly.Transform(transform);
             relation = PolyCornerRelation(poly);// add a new return type of list of integers with 0s
-            
+
             type = PolyType(relation);
             turn = PolyTurns(relation);
 
@@ -106,7 +106,7 @@ namespace RoomSurveyorRH6
             //Turn the polyline into a list of points
             for (int i = 0; i < poly.SegmentCount; i++)
             {
-                Point3d P0 = (i == 0)? poly[poly.SegmentCount - 1] : poly[i - 1];
+                Point3d P0 = (i == 0) ? poly[poly.SegmentCount - 1] : poly[i - 1];
                 Point3d P1 = poly[i];
                 Point3d P2 = poly[i + 1];
 
@@ -124,7 +124,7 @@ namespace RoomSurveyorRH6
                 {
                     relation.Add(0);
                 }
-            }         
+            }
             return relation;
         }
 
@@ -187,7 +187,7 @@ namespace RoomSurveyorRH6
                 }
                 if (i == relation.Count - 1 && relation[next] == relation[i])
                 {
-                    if(typeList.Count == 0)//Its convex
+                    if (typeList.Count == 0)//Its convex
                     {
                         int count = (L != 0) ? L : R;
                         cornerCount.Add(count);
@@ -214,7 +214,7 @@ namespace RoomSurveyorRH6
                         cornerCount.Insert(0, count);
                         cornerCount.RemoveAt(1);
                     }
-                    
+
                 }
             }
 
@@ -295,9 +295,9 @@ namespace RoomSurveyorRH6
         private List<string> ShiftLeft(List<string> list, int shiftBy)
         {
             if (list.Count <= shiftBy)
-                {
-                    return list;
-                }
+            {
+                return list;
+            }
 
             var result = list.GetRange(shiftBy, list.Count - shiftBy);
             result.AddRange(list.GetRange(0, shiftBy));

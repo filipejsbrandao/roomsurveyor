@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-
-using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class RandomOgon : GH_Component
     {
@@ -13,13 +11,13 @@ namespace RoomSurveyorRH6
           : base("Random Ogon Generator", "Ogon1",
             "Random Ogon Generator - CutPaste. This algorithm generates a random orthogonal polygon by cutting or pasting rectangles to a seed rectangle. Is follows a similiar approach to one described by Tomas and Bajuelos 2004 InflatePaste and InflateCut algorithms, with some improvements to adapt it to floating point and reduce the likelyhood of failure in cuts. It implements one rule to prevent generating features that are smaller than a given dimension. This algorithm may fail if a point is outside the bounding box of the ogon or in certain interior very particular points.",
             "RoomSurveyor", "Polygon Generators")
-        { 
+        {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddRectangleParameter("Region", "R", "A rectangular region within which the ogon will be generated", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Minimum Feature","F","The length of the smallest feature", GH_ParamAccess.item, 0.10);
+            pManager.AddNumberParameter("Minimum Feature", "F", "The length of the smallest feature", GH_ParamAccess.item, 0.10);
             pManager.AddBooleanParameter("Area Bias", "B", "If true the algorithm will favor Cuts or Pastes that minimize the area increase or decrease of the ogon", GH_ParamAccess.item, true);
             pManager.AddIntegerParameter("Number of sides", "N", "The number of sides of the generated Ogon. Only pair numbers are allowed", GH_ParamAccess.item, 6);
             pManager.AddIntegerParameter("Seed", "S", "An integer to be used as a seed for the random generator. If nothing is provided the system clock is used. Provide a seed if you wish to debug your algorithm", GH_ParamAccess.item);
@@ -43,7 +41,7 @@ namespace RoomSurveyorRH6
             if (!DA.GetData(1, ref min_feature)) return;
             if (!DA.GetData(2, ref areaBias)) return;
             if (!DA.GetData(3, ref n)) return;
-            DA.GetData(4, ref seed);
+            bool user = DA.GetData(4, ref seed);
 
             //Component.Message = "LATEST VERSION";
             if (!r.IsValid)
@@ -52,7 +50,7 @@ namespace RoomSurveyorRH6
                 return;
             }
 
-            if (min_feature == double.NaN)
+            if (double.IsNaN(min_feature))
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "min_feature must be a valid number");
                 return;
@@ -79,7 +77,8 @@ namespace RoomSurveyorRH6
             Rectangle3d newR = new Rectangle3d(Plane.WorldXY, maxX, maxY);
 
             Polyline ogon = newR.ToPolyline();//now make a polyline out of a rectangle (ideally this should be a circular linked list)
-            Random rand = new Random(seed);
+            Random rand = new Random();
+            Random userRand = new Random(seed);
             for (int i = 0; i < rCorners; i++)
             {
 
@@ -90,8 +89,8 @@ namespace RoomSurveyorRH6
                     Point3d randomPt = Point3d.Unset;
                     do
                     {
-                        double x = maxX * rand.NextDouble();
-                        double y = maxY * rand.NextDouble();
+                        double x = (!user) ? maxX * rand.NextDouble() : maxX * userRand.NextDouble();
+                        double y = (!user) ? maxY * rand.NextDouble() : maxY * userRand.NextDouble();
                         randomPt = new Point3d(x, y, 0);
                         if (randomPt.DistanceToSquared(ogon.ClosestPoint(randomPt)) < Math.Pow(tol, 2))
                         {
@@ -104,7 +103,7 @@ namespace RoomSurveyorRH6
                         }
                     } while (!validPt);
 
-                    sucess = CutPaste(randomPt, ref ogon, maxX, maxY, areaBias, rand.Next(0, 7), tol);
+                    sucess = (!user) ? CutPaste(randomPt, ref ogon, maxX, maxY, areaBias, rand.Next(0, 7), tol) : CutPaste(randomPt, ref ogon, maxX, maxY, areaBias, userRand.Next(0, 7), tol);
 
                 } while (!sucess);
             }
@@ -158,10 +157,6 @@ namespace RoomSurveyorRH6
                 {
                     int prev = (int)paramList[i];
                     int next = (prev + 1) % ogon.SegmentCount;
-                    //int next2 = (next + 1) % ogon.SegmentCount;
-                    //int i_next = (i + 1) % ccx.Count;//Maybe this is no longer needed
-                    //int i_prev = (i == 0) ? ccx.Count - 1 : (i - 1) % ccx.Count;//Maybe this is no longer needed
-                    //int i_opposite = (i + 2) % ccx.Count;//Maybe this is no longer needed
                     if (ccx[i].DistanceToSquared(ogon[next]) > tol * tol && ccx[i].DistanceToSquared(ogon[prev]) > tol * tol)
                     {
                         Rectangle3d ccw = new Rectangle3d(Plane.WorldXY, pt, ogon[next]);
@@ -187,11 +182,8 @@ namespace RoomSurveyorRH6
                 for (int i = 0; i < ccx.Count; i++)
                 {
                     int prev = (int)paramList[i];
-                    //int prev2 = (prev == 0) ? ogon.SegmentCount : prev - 1;
                     int next = (prev + 1) % ogon.SegmentCount;
-                    //int i_next = (i + 1) % ccx.Count;
                     int i_prev = (i == 0) ? ccx.Count - 1 : (i - 1) % ccx.Count;
-                    //int i_opposite = (i + 2) % ccx.Count;
                     if (ccx[i].DistanceToSquared(ogon[next]) > tol * tol && ccx[i].DistanceToSquared(ogon[prev]) > tol * tol)
                     {
                         if (prev != ((int)paramList[i_prev] + 1) % ogon.SegmentCount)
@@ -225,11 +217,7 @@ namespace RoomSurveyorRH6
                 for (int i = 0; i < ccx.Count; i++)
                 {
                     int prev = (int)paramList[i];
-                    //int prev2 = (prev == 0) ? ogon.SegmentCount : prev - 1;
                     int next = (prev + 1) % ogon.SegmentCount;
-                    //int i_next = (i + 1) % ccx.Count;
-                    //int i_prev = (i == 0) ? ccx.Count - 1 : (i - 1) % ccx.Count;
-                    //int i_opposite = (i + 2) % ccx.Count;
                     if (ccx[i].DistanceToSquared(ogon[next]) > tol * tol && ccx[i].DistanceToSquared(ogon[prev]) > tol * tol)
                     {
                         Rectangle3d ccw = new Rectangle3d(Plane.WorldXY, pt, ogon[prev]);
@@ -257,10 +245,7 @@ namespace RoomSurveyorRH6
                 {
                     int prev = (int)paramList[i];
                     int next = (prev + 1) % ogon.SegmentCount;
-                    //int next2 = (next + 1) % ogon.SegmentCount;
-                    //int i_next = (i + 1) % ccx.Count;
                     int i_prev = (i == 0) ? ccx.Count - 1 : (i - 1) % ccx.Count;
-                    //int i_opposite = (i + 2) % ccx.Count;
                     if (ccx[i].DistanceToSquared(ogon[next]) > tol * tol && ccx[i].DistanceToSquared(ogon[prev]) > tol * tol)
                     {
                         if (prev != ((int)paramList[i_prev] - 1) % ogon.SegmentCount)

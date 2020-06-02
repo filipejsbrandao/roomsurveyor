@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class RoomSurvey6 : GH_Component
     {
@@ -20,6 +20,7 @@ namespace RoomSurveyorRH6
             pManager.AddCurveParameter("Polygon", "P", "A polyline that is garanteed to be a closed, non-intersecting and oriented polygon. Use the CheckPolygon component", GH_ParamAccess.item);
             pManager.AddNumberParameter("Side Lengths (m)", "SL", "A list containing the length in meters of each side in an anticlockwise sequence", GH_ParamAccess.list);
             pManager.AddNumberParameter("Diagonals (m)", "D", "A list containing the length of the diagonals in meters in the sequence requested by the Out of this component", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Plane", "Pl", "The plane the polygon is on", GH_ParamAccess.item, Plane.WorldXY);
             pManager[2].Optional = true;
         }
 
@@ -28,18 +29,22 @@ namespace RoomSurveyorRH6
             pManager.AddTextParameter("Output", "Out", "A list of string containing the sequence of needed diagonals to close the polygon", GH_ParamAccess.list);
             pManager.AddCurveParameter("Room", "R", "The surveyed room", GH_ParamAccess.item);
             pManager.AddLineParameter("Diagonals", "D", "Required Diagonals as lines for representation purposes", GH_ParamAccess.list);
+            pManager.AddBooleanParameter("Triangulated", "T", "Returns true if the polygon is triangulated within tolerance", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Polyline poly = new Polyline();
             Curve curve = poly.ToNurbsCurve();
+            Plane userPlane = Plane.WorldXY;
+            bool triangulated = false;
             List<double> lengths = new List<double>();
             List<double> diagonals = new List<double>();
 
             if (!DA.GetData(0, ref curve)) return;
             if ((lengths != null) && !DA.GetDataList(1, lengths)) return;
             DA.GetDataList(2, diagonals);
+            DA.GetData(3, ref userPlane);
 
             foreach (double l in lengths)
             {
@@ -53,6 +58,12 @@ namespace RoomSurveyorRH6
             if (!curve.IsPlanar())
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon must be a planar polyline");
+                return;
+            }
+
+            if (!userPlane.IsValid)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Please provide a valid plane");
                 return;
             }
 
@@ -87,6 +98,12 @@ namespace RoomSurveyorRH6
                 return;
             }
 
+            if (!curve.IsInPlane(userPlane))
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon is not on the provided plane");
+                return;
+            }
+
             List<Vector3d> polyVec = new List<Vector3d>();
             List<string> outText = new List<string>();
             List<Line> diagLines = new List<Line>();
@@ -95,8 +112,17 @@ namespace RoomSurveyorRH6
             Polyline rebuiltPoly = new Polyline();
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
             double error;
+            Transform transform = Transform.Identity;//We change nothing
+            Transform reverseTrans = Transform.Identity;//We change nothing
 
-            poly = OrientPoly(poly);//Confirm that the polyline is CCW oriented
+            if (userPlane.Normal.IsParallelTo(Plane.WorldXY.Normal, 0.001) == 0)
+            {
+                transform = Transform.PlaneToPlane(userPlane, Plane.WorldXY);//otherwise we transform the polygon
+                reverseTrans = Transform.PlaneToPlane(Plane.WorldXY, userPlane);//And put it back in place
+            }
+
+            poly.Transform(transform);
+            poly = OrientPoly(poly, Plane.WorldXY);//Confirm that the polyline is CCW oriented on the XY plane
 
             //Contruct the vector chain that represents the new polyline
             for (int i = 0; i < poly.Count - 1; i++)
@@ -113,7 +139,9 @@ namespace RoomSurveyorRH6
                 // GOT A SOLUTION
                 error = ClosingError(polyVec) * 1000;
                 rebuiltPoly = RebuildPoly(poly, polyVec);
+                rebuiltPoly.Transform(reverseTrans);
                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                triangulated = true;
             }
             else
             {
@@ -178,6 +206,7 @@ namespace RoomSurveyorRH6
                     int i = (int)Math.Floor(matrixSize + 0.5 - Math.Sqrt(matrixSize * (matrixSize + 1) - 2 * k + 0.25));
                     int j = k + i * (i + 1) / 2 - matrixSize * i;
                     Line diagonal = new Line(poly[i], poly[j]);
+                    diagonal.Transform(reverseTrans);
                     diagLines.Add(diagonal);
                     outText.Add("Measure the distance from Point " + i + " to Point " + j);
                     if (diagonals.Count > c)
@@ -359,7 +388,9 @@ namespace RoomSurveyorRH6
                                 isTriVec[P2] = 1;
                                 error = ClosingError(polyVec) * 1000;
                                 rebuiltPoly = RebuildPoly(poly, polyVec);
+                                rebuiltPoly.Transform(reverseTrans);
                                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                                triangulated = true;
                                 break;
                             }
                         }
@@ -384,7 +415,9 @@ namespace RoomSurveyorRH6
                             }
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
+                            rebuiltPoly.Transform(reverseTrans);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -394,7 +427,9 @@ namespace RoomSurveyorRH6
                         {
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
+                            rebuiltPoly.Transform(reverseTrans);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                     }
@@ -409,6 +444,7 @@ namespace RoomSurveyorRH6
                             pt = rebuiltPoly[m] + polyVec[m];
                             rebuiltPoly.Add(pt);
                         }
+                        rebuiltPoly.Transform(reverseTrans);
                         //End Degug method
                         break;
                     }
@@ -417,7 +453,7 @@ namespace RoomSurveyorRH6
             DA.SetDataList(0, outText);
             DA.SetData(1, rebuiltPoly);
             DA.SetDataList(2, diagLines);
-
+            DA.SetData(3, triangulated);
         }
         /// <summary>
         /// Triangulate the specified polygonal chain polyVec between P0 and P2, with center on P1 and diagonal as the length of the diagonal.
@@ -514,8 +550,8 @@ namespace RoomSurveyorRH6
         /// <param name="isTriVec">Is tri vec.</param>
         public static void RemoveDiagonals(double[,] diagonalMatrix, List<int> orderedDiagonals, List<int> isTriVec)
         {
-            int k = 0;
-            int matrixSize = diagonalMatrix.GetLength(0);
+            //int k = 0;
+            //int matrixSize = diagonalMatrix.GetLength(0);
 
             //++++++++++++TODO+++++++++++++++++++++++++
             //A better method to remove diagonals by looking at patterns of 0s and 1s
@@ -1290,16 +1326,15 @@ namespace RoomSurveyorRH6
 
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         /// <summary>
-        /// Given a closed polyline this method returns a Counter Clockwise oriented polyline
+        /// Orient a closed polyline on a plane to a counter-clockwise orientation.
         /// </summary>
-        /// <param name="poly"> A closed polyline</param>
-        /// <returns>A CCW oriented polyline</returns>
-        public static Polyline OrientPoly(Polyline poly)
+        /// <param name="poly">The polyline to orient</param>
+        /// <param name="plane">The reference plane</param>
+        /// <returns></returns>
+        public static Polyline OrientPoly(Polyline poly, Plane plane)
         {
-
-            Vector3d unitZ = new Vector3d(0, 0, 1);
             Curve a = poly.ToNurbsCurve();
-            if (a.ClosedCurveOrientation(unitZ) == CurveOrientation.Clockwise)
+            if (a.ClosedCurveOrientation(plane) == CurveOrientation.Clockwise)
                 poly.Reverse();
 
             return poly;

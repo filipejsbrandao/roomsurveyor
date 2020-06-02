@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class RoomSurvey4 : GH_Component
     {
@@ -103,9 +103,6 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon is not on the provided plane");
                 return;
             }
-
-            
-            //Prevent self-intersecting polygons
 
             List<Vector3d> polyVec = new List<Vector3d>();
             List<string> outText = new List<string>();
@@ -477,7 +474,6 @@ namespace RoomSurveyorRH6
             DA.SetData(1, rebuiltPoly);
             DA.SetDataList(2, diagLines);
             DA.SetData(3, triangulated);
-
         }
         /// <summary>
         /// Triangulate the specified polygonal chain polyVec between P0 and P2, with center on P1 and diagonal as the length of the diagonal.
@@ -574,8 +570,8 @@ namespace RoomSurveyorRH6
         /// <param name="isTriVec">Is tri vec.</param>
         public static void RemoveDiagonals(double[,] diagonalMatrix, List<int> orderedDiagonals, List<int> isTriVec)
         {
-            int k = 0;
-            int matrixSize = diagonalMatrix.GetLength(0);
+            //int k = 0;
+            //int matrixSize = diagonalMatrix.GetLength(0);
 
             //++++++++++++TODO+++++++++++++++++++++++++
             //A better method to remove diagonals by looking at patterns of 0s and 1s

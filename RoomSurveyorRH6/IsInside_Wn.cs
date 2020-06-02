@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class IsInside_Wn : GH_Component
     {
@@ -67,7 +67,7 @@ namespace RoomSurveyorRH6
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A closed polyline must be supplied");
                 return;
             }
-            foreach(Point3d pt in pts)
+            foreach (Point3d pt in pts)
             {
                 if (!pt.IsValid)
                 {
@@ -81,7 +81,7 @@ namespace RoomSurveyorRH6
             int edges = poly.SegmentCount;
             Point3d[] pointArray = poly.ToArray();
 
-            foreach(Point3d pt in pts)
+            foreach (Point3d pt in pts)
             {
                 Point3d tempPt = uPlane.ClosestPoint(pt);
                 Point3d tempPt2 = new Point3d(tempPt);

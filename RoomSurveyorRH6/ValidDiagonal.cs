@@ -7,7 +7,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class ValidDiagonal : GH_Component
     {
@@ -31,7 +31,7 @@ namespace RoomSurveyorRH6
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            
+
             Polyline poly = new Polyline();
             Curve curve = poly.ToNurbsCurve();
 
@@ -80,10 +80,10 @@ namespace RoomSurveyorRH6
             DataTree<Line> diagonals = DiagonalTree(diagMatrix, poly);
             DataTree<int> indices = IndexTree(diagMatrix);
 
-            foreach(var path in diagonals.Paths)
+            foreach (var path in diagonals.Paths)
             {
                 List<Line> linesAtPath = diagonals.Branch(path);
-                for(int i = 0; i < linesAtPath.Count; i++)
+                for (int i = 0; i < linesAtPath.Count; i++)
                 {
                     Line l = linesAtPath[i];
                     l.Transform(transform);

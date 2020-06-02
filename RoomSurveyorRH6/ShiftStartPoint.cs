@@ -5,7 +5,8 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyorr
+
 {
     public class ShiftStartPoint : GH_Component
     {

@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class DeOgonizer_v4 : GH_Component
     {
@@ -194,7 +194,7 @@ namespace RoomSurveyorRH6
             if (events.Count > 2)
             {
                 intersect = true;
-            
+
                 for (int i = 0; i < events.Count; i++)
                 {
                     var ccx_event = events[i];

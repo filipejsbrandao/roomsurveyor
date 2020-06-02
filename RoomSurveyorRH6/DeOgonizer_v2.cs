@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class DeOgonizer_v2 : GH_Component
     {
@@ -114,7 +114,7 @@ namespace RoomSurveyorRH6
 
             for (int j = 0; j <= n; j++)
             {
-                int rand = (!user)? r.Next(corners.Count) : rUser.Next(corners.Count);
+                int rand = (!user) ? r.Next(corners.Count) : rUser.Next(corners.Count);
                 randomCorner.Add(corners[rand]);
                 corners.RemoveAt(rand);
             }

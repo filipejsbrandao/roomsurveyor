@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
-using RoomSurveyorRH6;
+using RoomSurveyor;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class DeOgonizer_v3 : GH_Component
     {
@@ -108,7 +108,7 @@ namespace RoomSurveyorRH6
 
             Random r = new Random();
             Random rUser = new Random(s);
-            
+
             List<int> randomCorner = new List<int>();
 
             ogon.RemoveAt(count);
@@ -120,7 +120,7 @@ namespace RoomSurveyorRH6
 
             for (int j = 0; j <= n; j++)
             {
-                int rand = (!user)? r.Next(corners.Count): rUser.Next(corners.Count);
+                int rand = (!user) ? r.Next(corners.Count) : rUser.Next(corners.Count);
                 randomCorner.Add(corners[rand]);
                 corners.RemoveAt(rand);
             }
@@ -142,8 +142,8 @@ namespace RoomSurveyorRH6
                 pl.Add(plano);
                 Circle circulo = new Circle(plano, v * radius);
                 Vector3d raio = plano.YAxis * v * radius;
-                var randRad = (!user)? r.NextDouble() : rUser.NextDouble();
-                var randY = (!user)? r.NextDouble() : rUser.NextDouble();
+                var randRad = (!user) ? r.NextDouble() : rUser.NextDouble();
+                var randY = (!user) ? r.NextDouble() : rUser.NextDouble();
                 raio.Rotate(Math.PI * 2 * randRad, plano.ZAxis);
                 Point3d newPoint = ogon[current] + raio * randY;
                 circles.Add(circulo);

@@ -6,7 +6,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class PolygonDiagonals : GH_Component
     {
@@ -198,7 +198,7 @@ namespace RoomSurveyorRH6
         {
             get
             {
-                return Properties.Resources.PolyDiagonals_Icon;
+                return Properties.Resources.PolyDiagonals2_Icon;
             }
         }
 

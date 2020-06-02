@@ -3,8 +3,19 @@ using System.Drawing;
 using Grasshopper;
 using Grasshopper.Kernel;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyorr
+
 {
+    public class RoomSurveyorCategoryIcon : Grasshopper.Kernel.GH_AssemblyPriority
+    {
+        public override Grasshopper.Kernel.GH_LoadingInstruction PriorityLoad()
+        {
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("RoomSurveyor", RoomSurveyorr..Properties.Resources.RoomSurveyor_A_Icon);
+            Grasshopper.Instances.ComponentServer.AddCategorySymbolName("RoomSurveyor", 'R');
+            return Grasshopper.Kernel.GH_LoadingInstruction.Proceed;
+        }
+    }
+
     public class RoomSurveyorRH6Info : GH_AssemblyInfo
     {
         public override string Name
@@ -18,7 +29,7 @@ namespace RoomSurveyorRH6
         {
             get
             {
-                return Properties.Resources.RoomSurvey_Icon;
+                return Properties.Resources.RoomSurveyor_A_Icon;
             }
         }
         public override string Description

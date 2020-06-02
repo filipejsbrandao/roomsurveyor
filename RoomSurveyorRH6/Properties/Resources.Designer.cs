@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace RoomSurveyorRH6.Properties {
+namespace RoomSurveyorr..Properties {
     using System;
     using System.Reflection;
     
@@ -239,6 +239,13 @@ namespace RoomSurveyorRH6.Properties {
         internal static System.Drawing.Bitmap RS_OnSpeeds_Icon {
             get {
                 object obj = ResourceManager.GetObject("RS_OnSpeeds_Icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap RoomSurveyor_A_Icon {
+            get {
+                object obj = ResourceManager.GetObject("RoomSurveyor_A_Icon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

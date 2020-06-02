@@ -8,6 +8,7 @@
     <RootNamespace>RoomSurveyorRH6</RootNamespace>
     <AssemblyName>RoomSurveyorRH6</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <ReleaseVersion>0.6.0</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -108,6 +109,7 @@
     <None Include="Properties\PolyDiagonals.png" />
     <None Include="Properties\PolyDiagonals2.png" />
     <None Include="Properties\RandomConvexPoly.png" />
+    <None Include="Properties\RoomSurveyor_24px.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

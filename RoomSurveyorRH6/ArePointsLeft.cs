@@ -5,7 +5,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class ArePointsLeft : GH_Component
     {
@@ -55,7 +55,7 @@ namespace RoomSurveyorRH6
 
             for (int i = 0; i < Pts.Count; i++)
             {
-                double isleft= IsLeft(P0, P1, Pts[i]);
+                double isleft = IsLeft(P0, P1, Pts[i]);
                 isLeft.Add(isleft);
 
                 if (isleft > 0.0)

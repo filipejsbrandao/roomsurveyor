@@ -7,7 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class RoomSurveyOnSpeeds : GH_Component
     {
@@ -44,14 +44,16 @@ namespace RoomSurveyorRH6
 
             List<Curve> ogons = new List<Curve>();
             List<Curve> polies = new List<Curve>();
-            if(!DA.GetDataList(0, ogons)) { return; }
-            if(!DA.GetDataList(1, polies)) { return; }
+            if (!DA.GetDataList(0, ogons)) { return; }
+            if (!DA.GetDataList(1, polies)) { return; }
 
-            if(!(ogons.Count == polies.Count)) {
+            if (!(ogons.Count == polies.Count))
+            {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists must have the same number of items");
-                return; }
+                return;
+            }
 
-            for(int i = 0; i < ogons.Count; i++)
+            for (int i = 0; i < ogons.Count; i++)
             {
                 int iterations = 0;
                 GH_Path path = new GH_Path(i);
@@ -61,12 +63,12 @@ namespace RoomSurveyorRH6
                 //------------------------CHECKING THE OGON----------------------------------------------
                 if (!ogons[i].IsPlanar())
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The ogon " +i+ " must be a planar polyline");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The ogon " + i + " must be a planar polyline");
                     return;
                 }
 
                 var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(ogons[i], 0.001);
-                
+
                 if (events.Count != 0)
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided ogon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
@@ -128,7 +130,7 @@ namespace RoomSurveyorRH6
 
                 //poly = RoomSurvey4.OrientPoly(poly); Not sure if we should do this in theory the DeOgonizer hasn't changed the start point of the polygon or fliped the orientation
 
-                for(int j = 0; j < poly.SegmentCount; j++)
+                for (int j = 0; j < poly.SegmentCount; j++)
                 {
                     lengths.Add(poly.SegmentAt(j).Length);
                 }
@@ -151,7 +153,8 @@ namespace RoomSurveyorRH6
                         iterationList.Add(iterations);
                         closed = true;
                     }
-                    else if (outT[iterations].Substring(0,40) == "The length of the last provided diagonal") {
+                    else if (outT[iterations].Substring(0, 40) == "The length of the last provided diagonal")
+                    {
                         rebuiltPolies.Add(returnPoly);
                         diagLines.AddRange(diagL, path);
                         diagLengths.AddRange(diagonals, path);
@@ -188,7 +191,7 @@ namespace RoomSurveyorRH6
                         }
                     }
                     ++iterations;
-                    
+
                 } while (!closed);
             }
 
@@ -210,7 +213,7 @@ namespace RoomSurveyorRH6
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
             double error;
 
-            poly = RoomSurvey5.OrientPoly(poly);//Confirm that the polyline is CCW oriented
+            poly = RoomSurvey5.OrientPoly(poly, Plane.WorldXY);//Confirm that the polyline is CCW oriented
 
             //Contruct the vector chain that represents the new polyline
             for (int i = 0; i < poly.Count - 1; i++)
@@ -279,7 +282,7 @@ namespace RoomSurveyorRH6
                         for (int l = i; l < j; l++) { ijChain += polyVec[l]; }
                         for (int n = j; n < polyVec.Count; n++) { jiChain += polyVec[n]; }
                         for (int m = 0; m < i; m++) { jiChain += polyVec[m]; }
-                        
+
                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                         //--------INTERNAL TRIANGLES---------------------------------------------------
                         //the triangles formed by two edges of the polygon and a diagonal

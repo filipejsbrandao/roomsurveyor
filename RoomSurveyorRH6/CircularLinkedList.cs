@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     /// <summary>
     /// Represents a circular doubly linked list.

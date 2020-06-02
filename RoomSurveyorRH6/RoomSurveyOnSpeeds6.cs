@@ -7,7 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 
-namespace RoomSurveyorRH6
+namespace RoomSurveyor
 {
     public class RoomSurveyOnSpeeds6 : GH_Component
     {
@@ -214,7 +214,7 @@ namespace RoomSurveyorRH6
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
             double error;
 
-            poly = RoomSurvey6.OrientPoly(poly);//Confirm that the polyline is CCW oriented
+            poly = RoomSurvey6.OrientPoly(poly, Plane.WorldXY);//Confirm that the polyline is CCW oriented
 
             //Contruct the vector chain that represents the new polyline
             for (int i = 0; i < poly.Count - 1; i++)
