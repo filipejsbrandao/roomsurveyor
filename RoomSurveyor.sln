@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoomSurveyor", "RoomSurveyorRH6\RoomSurveyor.csproj", "{8A8618EF-23BE-40F7-96A1-0B05FAD32453}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoomSurveyor", "RoomSurveyor\RoomSurveyor.csproj", "{8A8618EF-23BE-40F7-96A1-0B05FAD32453}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
