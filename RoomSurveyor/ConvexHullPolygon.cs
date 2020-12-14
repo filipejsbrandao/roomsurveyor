@@ -77,6 +77,16 @@ namespace RoomSurveyor
                 return;
             }
 
+            //We can provide a boolean to the user to knowingly supress the self-intersection testing.
+            /*
+            var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(curve, 0.001);
+            if (events.Count != 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided polygon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
+                return;
+            }*/
+
+
             //This will remove colinear lines bellow an angle threshold and will reposition the start point of the curve to a corner if that point is colinear.
             //It will also remove 0 length segments.
             poly.MergeColinearSegments(RhinoDoc.ActiveDoc.ModelAngleToleranceRadians / 100, true);
