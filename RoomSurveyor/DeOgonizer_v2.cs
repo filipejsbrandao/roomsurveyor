@@ -9,6 +9,11 @@ namespace RoomSurveyor
 {
     public class DeOgonizer_v2 : GH_Component
     {
+        public override Grasshopper.Kernel.GH_Exposure Exposure
+        {
+            get { return GH_Exposure.hidden; }
+        }
+
         public DeOgonizer_v2()
           : base("DeOgonizer_v2", "DeOgon2",
             "This component transforms a ogon into a irregular non-convex polygon by recursively and randomly replacing square corners by non-orthogonal ones. Each corner is replaced by a random point inside a rectangle.",

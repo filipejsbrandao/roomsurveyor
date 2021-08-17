@@ -1,137 +1,231 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 
 namespace RoomSurveyor
 {
-    public class RoomSurvey5 : GH_Component
+    public class RoomSurveyStrictOnSpeeds : GH_Component
     {
+        public override Grasshopper.Kernel.GH_Exposure Exposure
+        {
+            get { return GH_Exposure.hidden; }
+        }
 
-        public RoomSurvey5()
-          : base("RoomSurvey", "RS",
-            "RoomSurvey - An algorithm to assist the survey of room plans using diagonals measured by the user between room corners." +
-                " This version of the algorithm is more efective in rooms with a few non-orthogonal corners.", "RoomSurveyor", "RoomSurvey")
+        public RoomSurveyStrictOnSpeeds()
+                  : base("RoomSurveyStrictOnSpeeds", "RS6_OS",
+                    "A test component that solves multiple ogon to polygon transformations. This version of algorithm doesn't use Polygon Chain Closure and uses the RoomSurveyStrict methods",
+                    "RoomSurveyor", "RoomSurvey")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddCurveParameter("Polygon", "P", "A polyline that is garanteed to be a closed, non-intersecting and oriented polygon. Use the CheckPolygon component", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Side Lengths (m)", "SL", "A list containing the length in meters of each side in an anticlockwise sequence", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Diagonals (m)", "D", "A list containing the length of the diagonals in meters in the sequence requested by the Out of this component", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Plane", "Pl", "The plane the polygon is on", GH_ParamAccess.item, Plane.WorldXY);
-            pManager[2].Optional = true;
+            pManager.AddCurveParameter("Starting Polygons", "SP", "A list with the user provided poligons", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Objective Polygons", "OP", "A list of the polygon we would like to achieve", GH_ParamAccess.list);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Output", "Out", "A list of string containing the sequence of needed diagonals to close the polygon", GH_ParamAccess.list);
-            pManager.AddCurveParameter("Room", "R", "The surveyed room", GH_ParamAccess.item);
-            pManager.AddLineParameter("Diagonals", "D", "Required Diagonals as lines for representation purposes", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Triangulated", "T", "Returns true if the polygon is triangulated within tolerance", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Output Polygons", "OP", "A list with the polygons our algorithm is able to produce", GH_ParamAccess.list);
+            pManager.AddTextParameter("User Output", "UO", "The user requested diagonals as strings", GH_ParamAccess.tree);
+            pManager.AddLineParameter("Diagonals", "D", "A tree with the requested diagonals for each polygon", GH_ParamAccess.tree);
+            pManager.AddIntegerParameter("Iterations", "I", "The number of diagonals that were requested", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Diagonal Lengths", "DL", "The diagonal lengths that were provided to the algorithm", GH_ParamAccess.tree);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Polyline poly = new Polyline();
-            Curve curve = poly.ToNurbsCurve();
-            Plane userPlane = Plane.WorldXY;
-            bool triangulated = false;
-            List<double> lengths = new List<double>();
-            List<double> diagonals = new List<double>();
+            //Here we will provide the algorithm with the starting polygon, catch the outputs and measure the requested diagonals
+            DataTree<string> outText = new DataTree<string>();
+            DataTree<Line> diagLines = new DataTree<Line>();
+            List<Polyline> rebuiltPolies = new List<Polyline>();
+            List<int> iterationList = new List<int>();
+            DataTree<double> diagLengths = new DataTree<double>();
 
-            if (!DA.GetData(0, ref curve)) return;
-            if ((lengths != null) && !DA.GetDataList(1, lengths)) return;
-            DA.GetDataList(2, diagonals);
-            DA.GetData(3, ref userPlane);
+            List<Curve> ogons = new List<Curve>();
+            List<Curve> polies = new List<Curve>();
+            if (!DA.GetDataList(0, ogons)) { return; }
+            if (!DA.GetDataList(1, polies)) { return; }
 
-            foreach (double l in lengths)
+            if (!(ogons.Count == polies.Count))
             {
-                //Here I don't protect against negative numbers to allow the user to supply -1 to skip diagonals
-                if (Math.Abs(l) < Double.Epsilon)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The lists must have the same number of items");
+                return;
+            }
+
+            for (int i = 0; i < ogons.Count; i++)
+            {
+                int iterations = 0;
+                GH_Path path = new GH_Path(i);
+                List<double> lengths = new List<double>();
+                List<double> diagonals = new List<double>();
+
+                //------------------------CHECKING THE OGON----------------------------------------------
+                if (!ogons[i].IsPlanar())
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "All sides of the room must be larger than 0");
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The ogon " + i + " must be a planar polyline");
                     return;
                 }
+
+                var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(ogons[i], 0.001);
+
+                if (events.Count != 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided ogon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
+                    return;
+                }
+
+                if (ogons[i].TryGetPolyline(out Polyline ogon))
+                { }
+                else
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Couldn't get a polyline from " + i + " polygon of the Starting Polygons list");
+                    return;
+                }
+
+                if (!ogon.IsValid)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Polyline " + i + " of the Starting Polygons list must have at least 3 segments");
+                    return;
+                }
+                if (!ogon.IsClosed)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Polyline " + i + " of the Starting Polygons list is not closed");
+                    return;
+                }
+
+                //------------------------CHECKING THE POLY----------------------------------------------
+                if (!polies[i].IsPlanar())
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The poly " + i + " must be a planar polyline");
+                    return;
+                }
+
+                events = Rhino.Geometry.Intersect.Intersection.CurveSelf(polies[i], 0.001);
+
+                if (events.Count != 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided polygon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
+                    return;
+                }
+
+                if (polies[i].TryGetPolyline(out Polyline poly))
+                { }
+                else
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Couldn't get a polyline from " + i + " polygon of the Objective Polygons list");
+                    return;
+                }
+
+                if (!poly.IsValid)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Polyline " + i + " of the Objective Polygons list must have at least 3 segments");
+                    return;
+                }
+                if (!poly.IsClosed)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Polyline " + i + " of the Objective Polygons list is not closed");
+                    return;
+                }
+
+                //poly = RoomSurvey4.OrientPoly(poly); Not sure if we should do this in theory the DeOgonizer hasn't changed the start point of the polygon or fliped the orientation
+
+                for (int j = 0; j < poly.SegmentCount; j++)
+                {
+                    lengths.Add(poly.SegmentAt(j).Length);
+                }
+
+                bool closed = false;
+                do
+                {
+                    Polyline returnPoly = RoomSurvey(ogon, lengths, diagonals, out List<string> outT, out List<Line> diagL);
+
+                    string[] words = outT[iterations].Split();
+                    int from = 0;
+                    int to = 0;
+
+                    if (outT[iterations].Substring(0, 21) == "The Polygon is closed")
+                    {
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        closed = true;
+                    }
+                    else if (outT[iterations].Substring(0, 40) == "The length of the last provided diagonal")
+                    {
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        break;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            from = Int32.Parse(words[5]);
+                        }
+                        catch (FormatException e)
+                        {
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                        }
+                        try
+                        {
+                            to = Int32.Parse(words[8]);
+                        }
+                        catch (FormatException e)
+                        {
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, e.Message);
+                        }
+
+                        if (Triangulation.IsValidDiagonal(new Line(poly[from], poly[to]), poly))
+                        {
+                            diagonals.Add(poly[from].DistanceTo(poly[to]));
+                        }
+                        else
+                        {
+                            diagonals.Add(-1);
+                        }
+                    }
+                    ++iterations;
+
+                } while (!closed);
             }
 
-            if (!curve.IsPlanar())
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon must be a planar polyline");
-                return;
-            }
+            DA.SetDataList(0, rebuiltPolies);
+            DA.SetDataTree(1, outText);
+            DA.SetDataTree(2, diagLines);
+            DA.SetDataList(3, iterationList);
+            DA.SetDataTree(4, diagLengths);
+        }
 
-            if (!userPlane.IsValid)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Please provide a valid plane");
-                return;
-            }
-
-            var events = Rhino.Geometry.Intersect.Intersection.CurveSelf(curve, 0.001);
-            if (events.Count != 0)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The provided polygon is either self-intersecting or is very thin. Tolerance for self-intersections is 0.001");
-                return;
-            }
-
-            if (curve.TryGetPolyline(out poly))
-            { }
-            else
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "P input expects a polygon to be provided");
-                return;
-            }
-
-            if (!poly.IsValid)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Closed polylines must have at least 3 segments");
-                return;
-            }
-            if (!poly.IsClosed)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "A closed polyline must be supplied");
-                return;
-            }
-            if (poly.SegmentCount != lengths.Count)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "List of side lengths must have the same number of entries as the number of polyline sides");
-                return;
-            }
-
-            if (!curve.IsInPlane(userPlane))
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The polygon is not on the provided plane");
-                return;
-            }
-
+        public Polyline RoomSurvey(Polyline poly, List<double> lengths, List<double> diagonals, out List<string> outText, out List<Line> diagLines)
+        {
             List<Vector3d> polyVec = new List<Vector3d>();
-            List<string> outText = new List<string>();
-            List<Line> diagLines = new List<Line>();
+            outText = new List<string>();
+            diagLines = new List<Line>();
             List<int> isTriVec = new List<int>();
 
             Polyline rebuiltPoly = new Polyline();
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
             double error;
-            Transform transform = Transform.Identity;//We change nothing
-            Transform reverseTrans = Transform.Identity;//We change nothing
-            if (userPlane.Normal.IsParallelTo(Plane.WorldXY.Normal, 0.001) == 0)
-            {
-                transform = Transform.PlaneToPlane(userPlane, Plane.WorldXY);//otherwise we transform the polygon
-                reverseTrans = Transform.PlaneToPlane(Plane.WorldXY, userPlane);//And put it back in place
-            }
 
-            poly.Transform(transform);
-            poly = Triangulation.OrientPoly(poly, Plane.WorldXY);//Confirm that the polyline is CCW oriented on the XY plane
+            poly = Triangulation.OrientPoly(poly, Plane.WorldXY);//Confirm that the polyline is CCW oriented
 
             //Contruct the vector chain that represents the new polyline
             for (int i = 0; i < poly.Count - 1; i++)
             {
                 Vector3d v = new Vector3d(poly[i + 1] - poly[i]);
                 v.Unitize();
-                v *= Math.Abs(lengths[i]);//To prevent negative dimensions
+                v *= lengths[i];
                 polyVec.Add(v);
             }
 
@@ -141,25 +235,24 @@ namespace RoomSurveyor
                 // GOT A SOLUTION
                 error = ClosingError(polyVec) * 1000;
                 rebuiltPoly = RebuildPoly(poly, polyVec);
-                rebuiltPoly.Transform(reverseTrans);
                 outText.Add("The Polygon is closed with a " + error + " mm error");
-                triangulated = true;
             }
             else
             {
+
                 //SET THE VECTORS TO NOT FIXED -----------------------------------------------------------------------------------------------------------------------
                 //We will use this to lock the corner's angles
                 for (int j = 0; j < polyVec.Count; j++)
                     isTriVec.Add(0);
 
+                //SET THE PROCESSING ORDER -------------------------------------------------------------------------------------------------------------------------------------
                 //lets create a vector with the order of the points
                 List<int> orderedPoints = new List<int>();
-                orderedPoints.AddRange(Triangulation.OrderByAngle(poly, false));
+                orderedPoints.AddRange(Triangulation.OrderByAngle(poly, true));
 
                 //Then the function that creates a matrix with all the diagonals of the polygon
                 double[,] diagMatrix = Triangulation.UpperMatrix(poly);
 
-                //SET THE DIAGONAL PROCESSING ORDER
                 List<int> orderedDiagonals = new List<int>();
                 if (IsPolyOrtho(poly))
                 {
@@ -173,9 +266,6 @@ namespace RoomSurveyor
                 }
 
                 //SUGEST THE FIRST DIAGONALS --------------------------------------------------------------------------------------------------------------------------------------
-                //The sugestor will propose a diagonal the user can measure
-                //If all internal angles are ortho then select the first corner with the longest diagonal
-                //If the user cannot measure a diagonal (i.e. its value is -1) the algorithm will cycle to the next
 
                 for (int c = 0; c < orderedDiagonals.Count; c++)
                 {//create a diagonal using the diagonal vector for the user to see and a text intruction indicating the action
@@ -184,7 +274,6 @@ namespace RoomSurveyor
                     int i = (int)Math.Floor(matrixSize + 0.5 - Math.Sqrt(matrixSize * (matrixSize + 1) - 2 * k + 0.25));
                     int j = k + i * (i + 1) / 2 - matrixSize * i;
                     Line diagonal = new Line(poly[i], poly[j]);
-                    diagonal.Transform(reverseTrans);
                     diagLines.Add(diagonal);
                     outText.Add("Measure the distance from Point " + i + " to Point " + j);
                     if (diagonals.Count > c)
@@ -192,64 +281,13 @@ namespace RoomSurveyor
                         diagMatrix[j, i] = diagonals[c];
                         bool ijIsTri = false;
                         bool jiIsTri = false;
+                        /*
                         Vector3d ijChain = new Vector3d();
                         Vector3d jiChain = new Vector3d();
-
+                        //test if the diagonal[c] closes the poligonal chain i to j or the polygonal chain j to i
                         for (int l = i; l < j; l++) { ijChain += polyVec[l]; }
                         for (int n = j; n < polyVec.Count; n++) { jiChain += polyVec[n]; }
                         for (int m = 0; m < i; m++) { jiChain += polyVec[m]; }
-                        // A tolerance of 7,5mm causes deviations of around 2.2 cm in a 6.175m diagonal
-                        // most recent Laser Distance Meters are rated with a +/- 1.5mm accuracy, in our case user introduced errors are likely higher
-
-                        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                        //--------INTERNAL TRIANGLES---------------------------------------------------
-                        //the triangles formed by two edges of the polygon and a diagonal
-                        //the triangles formed by one edge of the polygon and two diagonals
-                        //the internal triangles of the polygon formed by three diagonals
-                        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                        if (Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out bool itoj) >= 0 && diagonals[c] > 0)
-                        {
-                            int P1 = Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out itoj);
-                            int P0 = (itoj) ? i : j;
-                            int P2 = (itoj) ? j : i;
-                            double isleft = IsLeft(poly[P0], poly[P1], poly[P2]);
-                            if (!Triangulation.Triangulate(P0, P1, P2, itoj, diagonals[c], isTriVec, polyVec, isleft))
-                            {
-                                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The length of the last provided diagonal " + diagonals[c] + " is longer than the sum of the length of its adjacent walls from " + P0 + " to " + P2);
-                                outText.Add("The length of the last provided diagonal " + diagonals[c] + " is longer than the sum of the length of its adjacent walls from " + P0 + " to " + P2);
-                                DA.SetDataList(0, outText);
-                                DA.SetDataList(2, diagLines);
-                                return;
-                            }
-                            if (itoj) { ijIsTri = true; } else { jiIsTri = true; }
-                        }
-
-                        //check if the already provided diagonals will triangulate something
-                        int storedDiagonal = Triangulation.StoredDiagonal(diagMatrix, isTriVec, out itoj);
-                        if (storedDiagonal > 0)
-                        {
-                            while (storedDiagonal > 0 && Triangulation.Count0(isTriVec.ToArray(), matrixSize - 1, matrixSize, matrixSize) > 1)
-                            {
-                                i = (int)Math.Floor(matrixSize + 0.5 - Math.Sqrt(matrixSize * (matrixSize + 1) - 2 * storedDiagonal + 0.25));
-                                j = storedDiagonal + i * (i + 1) / 2 - matrixSize * i;
-                                int Pone = Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out itoj);
-                                int Pzero = (itoj) ? i : j;
-                                int Ptwo = (itoj) ? j : i;
-                                double isL = IsLeft(poly[Pzero], poly[Pone], poly[Ptwo]);
-                                if (!Triangulation.Triangulate(Pzero, Pone, Ptwo, itoj, diagMatrix[j, i], isTriVec, polyVec, isL))
-                                {
-                                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The length of the last provided diagonal " + diagMatrix[j, i] + " is longer than the sum of the length of its adjacent walls from " + Pzero + " to " + Ptwo);
-                                    outText.Add("The length of the last provided diagonal " + diagMatrix[j, i] + " is longer than the sum of the length of its adjacent walls from " + Pzero + " to " + Ptwo);
-                                    DA.SetDataList(0, outText);
-                                    DA.SetDataList(2, diagLines);
-                                    return;
-                                }
-                                if (itoj) { ijIsTri = true; } else { jiIsTri = true; }
-                                storedDiagonal = Triangulation.StoredDiagonal(diagMatrix, isTriVec, out itoj);
-                            }
-                        }
-                        //test if the diagonal[c] closes the poligonal chain i to j or the polygonal chain j to i
-                        //Now we need to check if any or both of the polygonal chains became closed with the diagonal
                         if (Math.Abs(ijChain.Length - diagonals[c]) < tol / 2 && diagonals[c] > 0)
                         {
                             ijIsTri = true;//lock the vectors from i+1 to j
@@ -271,8 +309,50 @@ namespace RoomSurveyor
                             {
                                 isTriVec[m] = 1;
                             }
+                        }*/
+
+                        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        //--------INTERNAL TRIANGLES---------------------------------------------------
+                        //the triangles formed by two edges of the polygon and a diagonal
+                        //the triangles formed by one edge of the polygon and two diagonals
+                        //the internal triangles of the polygon formed by three diagonals
+                        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        if (Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out bool itoj) >= 0 && diagonals[c] > 0)
+                        {
+                            int P1 = Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out itoj);
+                            int P0 = (itoj) ? i : j;
+                            int P2 = (itoj) ? j : i;
+                            double isleft = IsLeft(poly[P0], poly[P1], poly[P2]);
+                            if (!Triangulation.Triangulate(P0, P1, P2, itoj, diagonals[c], isTriVec, polyVec, isleft))
+                            {
+                                outText.Add("The length of the last provided diagonal " + diagonals[c] + " is longer than the sum of the length of its adjacent walls from " + P0 + " to " + P2);
+                                return rebuiltPoly;
+                            }
+                            if (itoj) { ijIsTri = true; } else { jiIsTri = true; }
                         }
 
+                        //check if the already provided diagonals will triangulate something
+                        int storedDiagonal = Triangulation.StoredDiagonal(diagMatrix, isTriVec, out itoj);
+                        if (storedDiagonal > 0)
+                        {
+                            while (storedDiagonal > 0 && Triangulation.Count0(isTriVec.ToArray(), matrixSize - 1, matrixSize, matrixSize) > 1)
+                            {
+                                i = (int)Math.Floor(matrixSize + 0.5 - Math.Sqrt(matrixSize * (matrixSize + 1) - 2 * storedDiagonal + 0.25));
+                                j = storedDiagonal + i * (i + 1) / 2 - matrixSize * i;
+                                int Pone = Triangulation.InternalTriangle(isTriVec.ToArray(), i, j, matrixSize, out itoj);
+                                int Pzero = (itoj) ? i : j;
+                                int Ptwo = (itoj) ? j : i;
+                                double isL = IsLeft(poly[Pzero], poly[Pone], poly[Ptwo]);
+                                if (!Triangulation.Triangulate(Pzero, Pone, Ptwo, itoj, diagMatrix[j, i], isTriVec, polyVec, isL))
+                                {
+                                    outText.Add("The length of the last provided diagonal " + diagonals[c] + " is longer than the sum of the length of its adjacent walls from " + Pzero + " to " + Ptwo);
+                                    return rebuiltPoly;
+                                }
+                                if (itoj) { ijIsTri = true; } else { jiIsTri = true; }
+                                storedDiagonal = Triangulation.StoredDiagonal(diagMatrix, isTriVec, out itoj);
+                            }
+                        }
+                        //Now we need to check if any or both of the polygonal chains became closed with the diagonal
                         if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0 || !ijIsTri && !jiIsTri)
                         {
                             //remove the diagonals between triangulated points from the diagonalOrder list
@@ -371,9 +451,7 @@ namespace RoomSurveyor
                                 isTriVec[P2] = 1;
                                 error = ClosingError(polyVec) * 1000;
                                 rebuiltPoly = RebuildPoly(poly, polyVec);
-                                rebuiltPoly.Transform(reverseTrans);
                                 outText.Add("The Polygon is closed with a " + error + " mm error");
-                                triangulated = true;
                                 break;
                             }
                         }
@@ -398,9 +476,7 @@ namespace RoomSurveyor
                             }
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
-                            rebuiltPoly.Transform(reverseTrans);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
-                            triangulated = true;
                             break;
                         }
                         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -410,9 +486,7 @@ namespace RoomSurveyor
                         {
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
-                            rebuiltPoly.Transform(reverseTrans);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
-                            triangulated = true;
                             break;
                         }
                     }
@@ -427,86 +501,13 @@ namespace RoomSurveyor
                             pt = rebuiltPoly[m] + polyVec[m];
                             rebuiltPoly.Add(pt);
                         }
-                        rebuiltPoly.Transform(reverseTrans);
                         //End Degug method
                         break;
                     }
                 }
             }
-            DA.SetDataList(0, outText);
-            DA.SetData(1, rebuiltPoly);
-            DA.SetDataList(2, diagLines);
-            DA.SetData(3, triangulated);
 
-        }
-
-        /// <summary>
-        /// Returns the tolerance required for closing the polygon
-        /// </summary>
-        /// <returns>The effective tolerance in mm.</returns>
-        /// <param name="vectors">A List of vectors that create the polygon.</param>
-        private double ClosingError(List<Vector3d> vectors)
-        {
-            Vector3d s = new Vector3d();
-            foreach (Vector3d v in vectors) s += v;
-            double error = s.Length;
-            return error;
-        }
-
-        /// <summary>
-        /// Rebuilds a polyline with a list of <paramref name="vectors"/>
-        /// </summary>
-        /// <returns>The poly.</returns>
-        /// <param name="polyline">Polyline.</param>
-        /// <param name="vectors">Vectors.</param>
-        private Polyline RebuildPoly(Polyline polyline, List<Vector3d> vectors)
-        {
-            Polyline newPoly = new Polyline();
-            newPoly.Add(polyline[0]);
-            Point3d p = new Point3d();
-            for (int j = 0; j < vectors.Count; j++)
-            {
-                if (j == vectors.Count - 1)
-                {
-                    p = newPoly[0];
-                    newPoly.Add(p);
-                }
-                else
-                {
-                    p = newPoly[j] + vectors[j];
-                    newPoly.Add(p);
-                }
-            }
-            return newPoly;
-        }
-
-        /// <summary>
-        /// Determines if a third point is Left, On or Right of an infinite 2D line defined by two points
-        /// </summary>
-        /// <returns>Returns a positive number if it is Left, a negative number if it is Right and 0 if it is on the line</returns>
-        /// <param name="P0">P0 - the first point</param>
-        /// <param name="P1">P1 - the second point</param>
-        /// <param name="P2">P2 - the point to test</param>
-        private static double IsLeft(Point3d P0, Point3d P1, Point3d P2)
-        {
-            return ((P1.X - P0.X) * (P2.Y - P0.Y) - (P2.X - P0.X) * (P1.Y - P0.Y));
-        }
-
-        /// <summary>
-        /// Checks if a list of vectors creates a closed polygon within a given tolerance.
-        /// </summary>
-        /// <returns><c>true</c>, if the resultant vector is smaller than the given <paramref name="tolerance"/>, <c>false</c> otherwise.</returns>
-        /// <param name="vectors">A list contaning the vectors.</param>
-        /// <param name="tolerance">Tolerance.</param>
-        private bool IsClosed(List<Vector3d> vectors, double tolerance)
-        {
-            Vector3d s = new Vector3d();
-            foreach (Vector3d v in vectors) s += v;
-            //IsTiny method takes a double
-            if (s.IsTiny(tolerance) == true || s.IsZero)
-                return true;
-            else
-                return false;
+            return rebuiltPoly;
 
         }
         /// <summary>
@@ -544,17 +545,93 @@ namespace RoomSurveyor
             return ortho;
         }
 
+        /// <summary>
+        /// Rebuilds a polyline with a list of <paramref name="vectors"/>
+        /// </summary>
+        /// <returns>The poly.</returns>
+        /// <param name="polyline">Polyline.</param>
+        /// <param name="vectors">Vectors.</param>
+        private Polyline RebuildPoly(Polyline polyline, List<Vector3d> vectors)
+        {
+            Polyline newPoly = new Polyline();
+            newPoly.Add(polyline[0]);
+            Point3d p = new Point3d();
+            for (int j = 0; j < vectors.Count; j++)
+            {
+                if (j == vectors.Count - 1)
+                {
+                    p = newPoly[0];
+                    newPoly.Add(p);
+                }
+                else
+                {
+                    p = newPoly[j] + vectors[j];
+                    newPoly.Add(p);
+                }
+            }
+            return newPoly;
+        }
+
+        /// <summary>
+        /// Returns the tolerance required for closing the polygon
+        /// </summary>
+        /// <returns>The effective tolerance in mm.</returns>
+        /// <param name="vectors">A List of vectors that create the polygon.</param>
+        private double ClosingError(List<Vector3d> vectors)
+        {
+            Vector3d s = new Vector3d();
+            foreach (Vector3d v in vectors) s += v;
+            double error = s.Length;
+            return error;
+        }
+
+
+        /// <summary>
+        /// Checks if a list of vectors creates a closed polygon within a given tolerance.
+        /// </summary>
+        /// <returns><c>true</c>, if the resultant vector is smaller than the given <paramref name="tolerance"/>, <c>false</c> otherwise.</returns>
+        /// <param name="vectors">A list contaning the vectors.</param>
+        /// <param name="tolerance">Tolerance.</param>
+        private bool IsClosed(List<Vector3d> vectors, double tolerance)
+        {
+            Vector3d s = new Vector3d();
+            foreach (Vector3d v in vectors) s += v;
+            //IsTiny method takes a double
+            if (s.IsTiny(tolerance) == true || s.IsZero)
+                return true;
+            else
+                return false;
+
+        }
+
+        /// <summary>
+        /// Determines if a third point is Left, On or Right of an infinite 2D line defined by two points
+        /// </summary>
+        /// <returns>Returns a positive number if it is Left, a negative number if it is Right and 0 if it is on the line</returns>
+        /// <param name="P0">P0 - the first point</param>
+        /// <param name="P1">P1 - the second point</param>
+        /// <param name="P2">P2 - the point to test</param>
+        private double IsLeft(Point3d P0, Point3d P1, Point3d P2)
+        {
+            return ((P1.X - P0.X) * (P2.Y - P0.Y) - (P2.X - P0.X) * (P1.Y - P0.Y));
+        }
+
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                return Properties.Resources.RoomSurvey_Icon;
+                return Properties.Resources.RS_OnSpeeds_Icon;
             }
         }
 
+        /// <summary>
+        /// Each component must have a unique Guid to identify it. 
+        /// It is vital this Guid doesn't change otherwise old ghx files 
+        /// that use the old ID will partially fail during loading.
+        /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("5d5cd560-e468-42f1-bfad-1e36b3203427"); }
+            get { return new Guid("3dcb1f8b-2d6f-42bc-8170-757845960b43"); }
         }
     }
 }

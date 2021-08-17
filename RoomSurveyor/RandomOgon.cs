@@ -324,7 +324,7 @@ namespace RoomSurveyor
         /// <summary>
         /// This method tests if any of the ogon corners lies inside the minimum convex space required by the candidate rectangle cut.
         /// </summary>
-        /// <param name="minConvexSpace">A closed polyline around rhe minimum convex free space.</param>
+        /// <param name="minConvexSpace">A closed polyline around the minimum convex free space.</param>
         /// <param name="ogon">The existing ogon to be cut or pasted.</param>
         /// <param name="n">The number of edges of the minConvexSpace closed polyline.</param>
         /// <returns></returns>

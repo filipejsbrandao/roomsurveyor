@@ -81,7 +81,7 @@ namespace RoomSurveyor
             poly.Transform(transform);
 
             transform = Transform.PlaneToPlane(Plane.WorldXY, curvePlane);
-            double[,] diagMatrix = RoomSurvey5.UpperMatrix(poly);
+            double[,] diagMatrix = Triangulation.UpperMatrix(poly);
             //var diagonals = new GH_Structure<GH_Line>();
             //var indices = new GH_Structure<GH_Integer>();
             //diagonals.AppendRange(DiagonalTree1(diagMatrix, poly));

@@ -64,9 +64,9 @@ namespace RoomSurveyor
                 return "http://filipebrandao.pt";
             }
         }
-        public override string AssemblyVersion => "0.7.0.1";
+        public override string AssemblyVersion => "0.7.1.0";
         
-        public override string Version => "0.7.0.1";
+        public override string Version => "0.7.1.0";
 
         public override Bitmap AssemblyIcon => Properties.Resources.RoomSurveyor_A_Icon;
 

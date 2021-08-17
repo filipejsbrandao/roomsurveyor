@@ -179,8 +179,8 @@ namespace RoomSurveyor
                 }
                 Point3d next = polyline[i + 1];
 
-                double first = RoomSurvey5.AngleAtCorner(current, previous, next); //must be Left so larger than 0
-                double second = RoomSurvey5.AngleAtCorner(current, diagonalEnd, next); //must be Left so larger than 0
+                double first = Triangulation.AngleAtCorner(current, previous, next); //must be Left so larger than 0
+                double second = Triangulation.AngleAtCorner(current, diagonalEnd, next); //must be Left so larger than 0
 
                 if (first > second)
                     type = 1;
