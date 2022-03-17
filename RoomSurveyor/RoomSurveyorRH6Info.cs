@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Drawing;
 using Grasshopper;
 using Grasshopper.Kernel;
@@ -61,7 +62,7 @@ namespace RoomSurveyor
             get
             {
                 //Return a string representing your preferred contact details.
-                return "http://filipebrandao.pt";
+                return "https://filipebrandao.pt";
             }
         }
         public override string AssemblyVersion => "0.7.1.0";

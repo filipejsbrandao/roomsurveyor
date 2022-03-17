@@ -5,7 +5,9 @@ using System.Diagnostics;
 namespace RoomSurveyor
 {
     /// <summary>
-    /// Represents a circular doubly linked list.
+    /// Represents a circular doubly linked list
+    /// Author: Navaneeth
+    /// https://navaneethkn.wordpress.com/2009/08/18/circular-linked-list/
     /// </summary>
     /// <typeparam name="T">Specifies the element type of the linked list.</typeparam>
     [DebuggerDisplay("Count = {Count}")]
@@ -191,7 +193,7 @@ namespace RoomSurveyor
             // finding a node for the existing item
             Node<T> node = this.Find(existingItem);
             if (node == null)
-                throw new ArgumentException("existingItem doesn't exist in the list");
+                throw new ArgumentException("existing Item doesn't exist in the list");
             this.AddAfter(node, newItem);
            
         }

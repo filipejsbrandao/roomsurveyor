@@ -5,11 +5,13 @@ namespace RoomSurveyor
 
 {
     /// <summary>
-/// Represents a node
-/// </summary>
-/// <typeparam name="T"></typeparam>
-[DebuggerDisplay("Value = {Value}")]
-public sealed class Node<T>
+    /// Represents a node
+    /// Author: Navaneeth
+    /// https://navaneethkn.wordpress.com/2009/08/18/circular-linked-list/
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [DebuggerDisplay("Value = {Value}")]
+    public sealed class Node<T>
     {
         /// <summary>
         /// Gets the Value
