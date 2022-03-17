@@ -1,5 +1,5 @@
 ﻿//
-// ValidDiagonal.cs
+// ValidDiagonal.cs 
 //
 // Author:
 //       Filipe Jorge da Silva Brandao
