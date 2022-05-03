@@ -144,17 +144,34 @@ namespace RoomSurveyor
             { //edge from V[i] to V[i+1]
                 if (poly[i].Y <= Pt.Y)
                 { // start Y <= Pt.Y
-                    if (poly[i + 1].Y > Pt.Y) // an upward crossing
-                        if (IsLeft(poly[i], poly[i + 1], Pt) > 0) // Pt is left of edge
+                    if (poly[i + 1].Y >= Pt.Y)
+                    { // an upward crossing
+                        int l = IsLeft(poly[i], poly[i + 1], Pt);
+                        if (l > 0)
+                        { // Pt is left of edge
                             ++wn; // have a valid up intersect
+                        }
+                        else if (l == 0)
+                        {
+                            return 0;
+                        }
+                    }
                 }
                 else
                 { // start Y > Pt.Y (no test needed)
-                    if (poly[i + 1].Y <= Pt.Y) // a downward crossing
-                        if (IsLeft(poly[i], poly[i + 1], Pt) < 0) // Pt is right of edge
+                    if (poly[i + 1].Y <= Pt.Y)
+                    { // a downward crossing
+                        int l = IsLeft(poly[i], poly[i + 1], Pt);
+                        if (l < 0)
+                        { // Pt is right of edge
                             --wn; // have a valid down intersect
+                        }
+                        else if (l == 0)
+                        {
+                            return 0;
+                        }
+                    }
                 }
-
             }
             return wn;
         }
@@ -166,9 +183,24 @@ namespace RoomSurveyor
         /// <param name="P1">P1 - the second point</param>
         /// <param name="P2">P2 - the point to test</param>
 
-        public static double IsLeft(Point3d P0, Point3d P1, Point3d P2)
+        public static int IsLeft(Point3d P0, Point3d P1, Point3d P2)
         {
-            return ((P1.X - P0.X) * (P2.Y - P0.Y) - (P2.X - P0.X) * (P1.Y - P0.Y));
+            double isLeft = ((P1.X - P0.X) * (P2.Y - P0.Y) - (P2.X - P0.X) * (P1.Y - P0.Y));
+            int relation;
+
+            if (isLeft < -Rhino.RhinoMath.ZeroTolerance)
+            {
+                relation = -1;
+            }
+            else if (isLeft > Rhino.RhinoMath.ZeroTolerance)
+            {
+                relation = 1;
+            }
+            else
+            {
+                relation = 0;
+            }
+            return relation;
         }
 
         protected override System.Drawing.Bitmap Icon
