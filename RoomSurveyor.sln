@@ -24,6 +24,7 @@ Global
 		$0.CSharpFormattingPolicy = $3
 		$3.scope = text/x-csharp
 		$0.VersionControlPolicy = $4
-		version = 0.7.1.0
+		$0.StandardHeader = $5
+		version = 0.7.2.0
 	EndGlobalSection
 EndGlobal
