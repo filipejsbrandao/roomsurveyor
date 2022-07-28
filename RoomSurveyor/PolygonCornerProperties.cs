@@ -137,11 +137,11 @@ namespace RoomSurveyor
 
                 double isLeft = IsLeft(P0, P1, P2);
 
-                if (isLeft < 0)
+                if (isLeft < 0)//isLeft < - Rhino.RhinoMath.ZeroTolerance
                 {
                     relation.Add(-1);
                 }
-                else if (isLeft > 0)
+                else if (isLeft > 0)//isLeft > Rhino.RhinoMath.ZeroTolerance
                 {
                     relation.Add(1);
                 }

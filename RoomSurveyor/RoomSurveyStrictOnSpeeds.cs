@@ -39,11 +39,11 @@ namespace RoomSurveyor
     {
         public override Grasshopper.Kernel.GH_Exposure Exposure
         {
-            get { return GH_Exposure.hidden; }
+            get { return GH_Exposure.septenary; }
         }
 
         public RoomSurveyStrictOnSpeeds()
-                  : base("RoomSurveyStrictOnSpeeds", "RS6_OS",
+                  : base("RoomSurveyStrictOnSpeeds", "RSS_OS",
                     "A test component that solves multiple ogon to polygon transformations. This version of algorithm doesn't use Polygon Chain Closure and uses the RoomSurveyStrict methods",
                     "RoomSurveyor", "RoomSurvey")
         {
@@ -171,11 +171,31 @@ namespace RoomSurveyor
                 {
                     Polyline returnPoly = RoomSurvey(ogon, lengths, diagonals, out List<string> outT, out List<Line> diagL);
 
+                    if(iterations > outT.Count - 1)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No more diagonals to request");
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        break;
+                    }
                     string[] words = outT[iterations].Split();
                     int from = 0;
                     int to = 0;
 
-                    if (outT[iterations].Substring(0, 21) == "The Polygon is closed")
+                    if (outT[iterations] == "No more diagonals to request" )
+                    {
+                        //AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No more diagonals to request");
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        break;
+                    }
+                    else if (outT[iterations].Substring(0, 21) == "The Polygon is closed")
                     {
                         rebuiltPolies.Add(returnPoly);
                         diagLines.AddRange(diagL, path);
@@ -226,7 +246,14 @@ namespace RoomSurveyor
                 } while (!closed);
             }
 
-            DA.SetDataList(0, rebuiltPolies);
+            List<Curve> c = new List<Curve>();
+            foreach(Polyline p in rebuiltPolies)
+            {
+                c.Add(p.ToPolylineCurve());
+            }
+
+            //DA.SetDataList(0, rebuiltPolies);
+            DA.SetDataList(0, c);
             DA.SetDataTree(1, outText);
             DA.SetDataTree(2, diagLines);
             DA.SetDataList(3, iterationList);
@@ -239,6 +266,7 @@ namespace RoomSurveyor
             outText = new List<string>();
             diagLines = new List<Line>();
             List<int> isTriVec = new List<int>();
+            bool triangulated = false;
 
             Polyline rebuiltPoly = new Polyline();
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
@@ -262,6 +290,7 @@ namespace RoomSurveyor
                 error = ClosingError(polyVec) * 1000;
                 rebuiltPoly = RebuildPoly(poly, polyVec);
                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                triangulated = true;
             }
             else
             {
@@ -280,16 +309,9 @@ namespace RoomSurveyor
                 double[,] diagMatrix = Triangulation.UpperMatrix(poly);
 
                 List<int> orderedDiagonals = new List<int>();
-                if (IsPolyOrtho(poly))
-                {
-                    orderedDiagonals.AddRange(Triangulation.DiagonalOrder(diagMatrix));
-                }
-                else
-                {
-                    orderedDiagonals.AddRange(Triangulation.DiagonalOrder(diagMatrix, orderedPoints));
-                    orderedDiagonals.AddRange(Triangulation.DiagonalOrder(diagMatrix));
-                    orderedDiagonals = orderedDiagonals.Distinct().ToList();
-                }
+                orderedDiagonals.AddRange(Triangulation.DiagonalOrder(diagMatrix, orderedPoints));
+                orderedDiagonals.AddRange(Triangulation.DiagonalOrder(diagMatrix));
+                orderedDiagonals = orderedDiagonals.Distinct().ToList();
 
                 //SUGEST THE FIRST DIAGONALS --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -307,35 +329,6 @@ namespace RoomSurveyor
                         diagMatrix[j, i] = diagonals[c];
                         bool ijIsTri = false;
                         bool jiIsTri = false;
-                        /*
-                        Vector3d ijChain = new Vector3d();
-                        Vector3d jiChain = new Vector3d();
-                        //test if the diagonal[c] closes the poligonal chain i to j or the polygonal chain j to i
-                        for (int l = i; l < j; l++) { ijChain += polyVec[l]; }
-                        for (int n = j; n < polyVec.Count; n++) { jiChain += polyVec[n]; }
-                        for (int m = 0; m < i; m++) { jiChain += polyVec[m]; }
-                        if (Math.Abs(ijChain.Length - diagonals[c]) < tol / 2 && diagonals[c] > 0)
-                        {
-                            ijIsTri = true;//lock the vectors from i+1 to j
-                            for (int n = i + 1; n < j; n++)
-                            {
-                                isTriVec[n] = 1;
-                            }
-                        }
-
-                        if (Math.Abs(jiChain.Length - diagonals[c]) < tol / 2 && diagonals[c] > 0)
-                        {
-                            jiIsTri = true;//lock the vectors of the polygonal chain from j+1 to i
-                            for (int n = j + 1; n < polyVec.Count; n++)
-                            {
-                                isTriVec[n] = 1;
-                            }
-
-                            for (int m = 0; m < i; m++)
-                            {
-                                isTriVec[m] = 1;
-                            }
-                        }*/
 
                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                         //--------INTERNAL TRIANGLES---------------------------------------------------
@@ -385,6 +378,10 @@ namespace RoomSurveyor
                             if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0)
                             {
                                 Triangulation.RemoveDiagonals(ijIsTri, jiIsTri, i, j, diagMatrix, orderedDiagonals);
+                                if (orderedDiagonals.Count <= outText.Count && !triangulated)
+                                {
+                                    outText.Add("No more diagonals to request");
+                                }
                             }
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             //--------101 PATTERN-------------
@@ -478,6 +475,7 @@ namespace RoomSurveyor
                                 error = ClosingError(polyVec) * 1000;
                                 rebuiltPoly = RebuildPoly(poly, polyVec);
                                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                                triangulated = true;
                                 break;
                             }
                         }
@@ -503,6 +501,7 @@ namespace RoomSurveyor
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -513,6 +512,7 @@ namespace RoomSurveyor
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                     }

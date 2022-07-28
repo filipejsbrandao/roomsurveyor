@@ -37,7 +37,7 @@ namespace RoomSurveyor
     {
         public override Grasshopper.Kernel.GH_Exposure Exposure
         {
-            get { return GH_Exposure.hidden; }
+            get { return GH_Exposure.septenary; }
         }
         public RoomSurvey4()
           : base("RoomSurvey 4", "RS4",
@@ -174,14 +174,6 @@ namespace RoomSurveyor
             }
             else
             {
-                /*
-                //LABEL THE POINTS ----------------------------------------------------------------------------------------------------------------------------------------------
-                Rhino.RhinoDoc doc = Rhino.RhinoDoc.ActiveDoc;
-                for (int i = 0; i < poly.Count - 1; i++)
-                {
-                    AddAnnotationText(doc, i.ToString(), poly[i], 1);
-                }*/
-
                 //SET THE VECTORS TO NOT FIXED -----------------------------------------------------------------------------------------------------------------------
                 //We will use this to lock the corner's angles
                 for (int j = 0; j < polyVec.Count; j++)
@@ -347,6 +339,10 @@ namespace RoomSurveyor
                             if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0)
                             {
                                 Triangulation.RemoveDiagonals(ijIsTri, jiIsTri, i, j, diagMatrix, orderedDiagonals);
+                                if (orderedDiagonals.Count <= outText.Count && !triangulated)
+                                {
+                                    outText.Add("No more diagonals to request");
+                                }
                             }
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             //--------101 PATTERN-------------

@@ -38,8 +38,7 @@ namespace RoomSurveyor
 
         public RoomSurveyStrict()
           : base("RoomSurveyStrict", "RS-S",
-            "RoomSurvey Strict - An algorithm to assist the survey of room plans using diagonals measured by the user between room corners. This version of the algorithm only requests the shortest diagonals." +
-                "It makes no assumptions on room othogonality. It is more effective in a room where all corners are not orthogonal.",
+            "RoomSurvey Strict - An algorithm to assist the survey of room plans using diagonals measured by the user between room corners. This version of the algorithm only requests the shortest diagonals. It makes no assumptions on room othogonality. It is more effective in a room where all corners are not orthogonal.",
             "RoomSurveyor", "RoomSurvey")
         {
         }
@@ -244,7 +243,8 @@ namespace RoomSurveyor
                         int storedDiagonal = Triangulation.StoredDiagonal(diagMatrix, isTriVec, out itoj);
                         if (storedDiagonal > 0)
                         {
-                            while (storedDiagonal > 0 && Triangulation.Count0(isTriVec.ToArray(), matrixSize - 1, matrixSize, matrixSize) > 1)
+                            //We need to test if a forcing Pattern 00 will give better results against the option of allowing to reuse up to >1
+                            while (storedDiagonal > 0 && Triangulation.Count0(isTriVec.ToArray(), matrixSize - 1, matrixSize, matrixSize) > 2)
                             {
                                 i = (int)Math.Floor(matrixSize + 0.5 - Math.Sqrt(matrixSize * (matrixSize + 1) - 2 * storedDiagonal + 0.25));
                                 j = storedDiagonal + i * (i + 1) / 2 - matrixSize * i;
@@ -268,6 +268,10 @@ namespace RoomSurveyor
                             if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0)
                             {
                                 Triangulation.RemoveDiagonals(ijIsTri, jiIsTri, i, j, diagMatrix, orderedDiagonals);
+                                if (orderedDiagonals.Count <= outText.Count && !triangulated)
+                                {
+                                    outText.Add("No more diagonals to request");
+                                }
                             }
 
                             //Here we could do a better resort of diagonals

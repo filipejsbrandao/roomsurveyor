@@ -39,7 +39,7 @@ namespace RoomSurveyor
     {
         public override Grasshopper.Kernel.GH_Exposure Exposure
         {
-            get { return GH_Exposure.hidden; }
+            get { return GH_Exposure.septenary; }
         }
         /// <summary>
         /// Change this one to match RoomSurvey5
@@ -171,14 +171,35 @@ namespace RoomSurveyor
                 {
                     Polyline returnPoly = RoomSurvey(ogon, lengths, diagonals, out List<string> outT, out List<Line> diagL);
 
+                    if (iterations > outT.Count - 1)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No more diagonals to request");
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        break;
+                    }
                     string[] words = outT[iterations].Split();
                     int from = 0;
                     int to = 0;
 
-                    if (outT[iterations].Substring(0, 21) == "The Polygon is closed")
+                    if (outT[iterations] == "No more diagonals to request")
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No more diagonals to request");
+                        rebuiltPolies.Add(returnPoly);
+                        diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
+                        outText.AddRange(outT, path);
+                        iterationList.Add(iterations);
+                        break;
+                    }
+                    else if (outT[iterations].Substring(0, 21) == "The Polygon is closed")
                     {
                         rebuiltPolies.Add(returnPoly);
                         diagLines.AddRange(diagL, path);
+                        diagLengths.AddRange(diagonals, path);
                         outText.AddRange(outT, path);
                         iterationList.Add(iterations);
                         closed = true;
@@ -237,6 +258,7 @@ namespace RoomSurveyor
             outText = new List<string>();
             diagLines = new List<Line>();
             List<int> isTriVec = new List<int>();
+            bool triangulated = false;
 
             Polyline rebuiltPoly = new Polyline();
             double tol = 0.015; //in case the lenghts are scaled to mm this would became an int
@@ -260,6 +282,7 @@ namespace RoomSurveyor
                 error = ClosingError(polyVec) * 1000;
                 rebuiltPoly = RebuildPoly(poly, polyVec);
                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                triangulated = true;
             }
             else
             {
@@ -382,6 +405,10 @@ namespace RoomSurveyor
                             if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0)
                             {
                                 Triangulation.RemoveDiagonals(ijIsTri, jiIsTri, i, j, diagMatrix, orderedDiagonals);
+                                if(orderedDiagonals.Count <= outText.Count && !triangulated)
+                                {
+                                    outText.Add("No more diagonals to request");
+                                }
                             }
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             //--------101 PATTERN-------------
@@ -475,6 +502,7 @@ namespace RoomSurveyor
                                 error = ClosingError(polyVec) * 1000;
                                 rebuiltPoly = RebuildPoly(poly, polyVec);
                                 outText.Add("The Polygon is closed with a " + error + " mm error");
+                                triangulated = true;
                                 break;
                             }
                         }
@@ -500,6 +528,7 @@ namespace RoomSurveyor
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -510,6 +539,7 @@ namespace RoomSurveyor
                             error = ClosingError(polyVec) * 1000;
                             rebuiltPoly = RebuildPoly(poly, polyVec);
                             outText.Add("The Polygon is closed with a " + error + " mm error");
+                            triangulated = true;
                             break;
                         }
                     }
@@ -645,7 +675,7 @@ namespace RoomSurveyor
             {
                 // You can add image files to your project resources and access them like this:
                 //return Resources.IconForThisComponent;
-                return null;
+                return Properties.Resources.RS_OnSpeeds_Icon;
             }
         }
 

@@ -304,6 +304,10 @@ namespace RoomSurveyor
                             if (ijIsTri && !jiIsTri || !ijIsTri && jiIsTri || diagonals[c] < 0)
                             {
                                 Triangulation.RemoveDiagonals(ijIsTri, jiIsTri, i, j, diagMatrix, orderedDiagonals);
+                                if (orderedDiagonals.Count <= outText.Count && !triangulated)
+                                {
+                                    outText.Add("No more diagonals to request");
+                                }
                             }
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             //--------101 PATTERN-------------

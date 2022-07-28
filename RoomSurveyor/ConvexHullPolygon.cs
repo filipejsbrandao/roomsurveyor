@@ -37,7 +37,7 @@ namespace RoomSurveyor
     {
         public override Grasshopper.Kernel.GH_Exposure Exposure
         {
-            get { return GH_Exposure.hidden; }
+            get { return GH_Exposure.septenary; }
         }
 
         public ConvexHullPolygon()
